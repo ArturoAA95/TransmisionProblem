@@ -37,7 +37,7 @@ def UpdateDistance(NB, om, dist, N, H, i_aux, j_aux):
         heapq.heappush(NB, (new_dist, [i_aux, j_aux]))
 
 
-def FastMarchingMethod(NB, om, dist, N, H): #Solves Eikonal equation
+def FastMarchingMethod2D(NB, om, dist, N, H): #Solves Eikonal equation
   #Inicialice narrow band
   InitializeNarrowBand(NB, om, dist, N, H)
   #Compute solution
