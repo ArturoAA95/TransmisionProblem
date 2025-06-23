@@ -4,9 +4,9 @@ import numpy as np
 #left side is Eikonal
 #right side is Brownian
 
-def CreateInterfase(om, k, N, f):
+def CreateInterfase(om, k, N, I):
   for i in range(1, N-1):
-    om[i, f(i)] = k
+    om[i, I(i)] = k
 
 def Build_Eik_Brown(om, N):
   for i in range (1, N-1):
@@ -20,7 +20,6 @@ def Build_Eik_Brown(om, N):
       j = j+1
 
 #Functions to convert the Browninan domain into a vector and its system
-
 
 def HashTablesBrownian(om, N):
   #Create hash tables for Brownian
@@ -43,6 +42,8 @@ def Coord_to_Pos(x, y, C_to_P):
 def Pos_to_Coord(l, P_to_C):
   return P_to_C[l]
 
+#Create sparse matrix for Laplace equation in the Brownian region
+# the matrix is in CSR format
 def CreateMatrixBrownian(C_to_P, P_to_C, dim, om):
   #Create sparse matrix for Brownian
   A = sparse.csr_matrix((dim, dim))
@@ -71,11 +72,11 @@ def CreateMatrixBrownian(C_to_P, P_to_C, dim, om):
   return A
 
 #Functions to update Interfase
-def Update_b(sol, CtoP, dim, om, f, N):
+def Update_b(sol, CtoP, dim, om, I, N):
   b = np.zeros(dim)
   for i in range(1, N-1):
     x = i
-    y = f(i)
+    y = I(i)
     l = Coord_to_Pos(x, y+1, CtoP)
     b[l] = b[l] - sol[x, y]
     if om[x+1, y+1] != 3:
@@ -85,12 +86,23 @@ def Update_b(sol, CtoP, dim, om, f, N):
   return b
 
 #Receives vector obtained when solving Laplaces equation and copies it to the solution matrix
-def Update_sol_I(sol, sol_brow, dim, N, CtoP, f):
+# Update_sol_I only updates near interfase
+def Update_sol_I(sol, sol_brow, dim, N, CtoP, I, om):
+  #print(CtoP)
   for i in range(1, N-1):
     x = i
-    y = f(i)
+    y = I(i)
+    #print(x, y)
     l = Coord_to_Pos(x, y+1, CtoP)
     sol[x, y+1] = sol_brow[l]
+    if om[x+1, y] == 3:
+      #print(x+1, y)
+      l = Coord_to_Pos(x+1, y, CtoP)
+      sol[x+1, y] = sol_brow[l]
+    if om[x-1, y] == 3:
+      #print(x-1, y+1)
+      l = Coord_to_Pos(x-1, y, CtoP)
+      sol[x-1, y] = sol_brow[l]
   return sol
 
 def Update_sol(sol, sol_brow, dim, PtoC):
